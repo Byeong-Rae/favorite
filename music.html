@@ -8,7 +8,16 @@
 </head>
 <body>
 <h2>음악&영상</h2>
-<audio id="audioPlayer" controls></audio>
+<!-- 커스텀 재생 영역 -->
+<div class="music-box">
+  <audio id="audioPlayer"></audio>
+  
+  <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
+  <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+  
+  <div id="trackInfo">음악 준비 중...</div>
+</div>
+
 <script>
   const playlist = [
     "https://github.com/Byeong-Rae/music/blob/main/ABBA - The Winner Takes It All (1980).mp3",
@@ -22,22 +31,59 @@
     "https://github.com/Byeong-Rae/music/blob/main/진추하 - One Summer Night.mp3",
     "https://github.com/Byeong-Rae/music/blob/main/Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
   ];
-  let currentTrack = 0;
+let currentTrack = 0;
   const player = document.getElementById("audioPlayer");
-  
-  function playTrack(index) {
-    player.src = playlist[index];
+  const playBtn = document.getElementById("playBtn");
+  const trackInfo = document.getElementById("trackInfo");
+
+  // 곡 불러오기 및 자동 재생 시도 함수
+  function loadAndPlay(index) {
+    currentTrack = index;
+    player.src = playlist[currentTrack].url;
     player.load();
-    player.play();
+    player.play().then(() => {
+      playBtn.innerText = "⏸ 일시정지";
+      trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
+    }).catch(error => {
+      console.log("자동 재생 차단됨:", error);
+      playBtn.innerText = "▶ 재생";
+      trackInfo.innerText = "브라우저 정책으로 자동 재생이 차단되었습니다. [재생] 버튼을 눌러주세요.";
+    });
   }
-  
-  player.onended = function() {
+
+  // 재생 / 일시정지 토글 버튼
+  function togglePlay() {
+    if (player.paused) {
+      if (!player.src) {
+        loadAndPlay(currentTrack);
+      } else {
+        player.play();
+        playBtn.innerText = "⏸ 일시정지";
+        trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
+      }
+    } else {
+      player.pause();
+      playBtn.innerText = "▶ 재생";
+      trackInfo.innerText = "일시정지됨";
+    }
+  }
+
+  // 다음 곡 버튼
+  function nextTrack() {
     currentTrack = (currentTrack + 1) % playlist.length;
-    playTrack(currentTrack);
+    loadAndPlay(currentTrack);
+  }
+
+  // 한 곡이 끝나면 자동으로 다음 곡 재생 (반복)
+  player.onended = function() {
+    nextTrack();
   };
-  
-  // 첫 곡 자동 재생 시작
-  playTrack(0);
+
+  // 페이지가 열리자마자 첫 곡 자동 재생 시도
+  window.addEventListener("DOMContentLoaded", () => {
+    loadAndPlay(0);
+  });
 </script>
+
 </body>
 </html>
