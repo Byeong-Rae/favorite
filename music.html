@@ -42,6 +42,11 @@
   
   <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
   <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+
+  <!-- 볼륨 조절 슬라이더 바 -->
+  <div class="volume-control">
+    🔊 볼륨: <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
+  </div>
   
   <div id="trackInfo">음악 준비 중...</div>
 </div>
@@ -102,6 +107,11 @@ let currentTrack = 0;
     loadAndPlay(currentTrack);
   }
 
+  // 볼륨 조절 함수 (슬라이더를 움직일 때 실시간으로 반영)
+  function changeVolume(value) {
+    player.volume = value;
+  }
+  
   // 한 곡이 끝나면 자동으로 다음 곡 재생 (반복)
   player.onended = function() {
     nextTrack();
