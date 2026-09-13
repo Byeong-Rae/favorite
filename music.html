@@ -2,7 +2,6 @@
 <html lang="KR">
 <head>
 <title>음악&영상</title>
-<link rel="stylesheet" href="style.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
@@ -27,6 +26,10 @@
   .music-btn:hover {
     background-color: #45a049;
   }
+  .volume-control {
+    margin-top: 12px;
+    font-size: 14px;
+  }
   #trackInfo {
     margin-top: 10px;
     font-size: 14px;
@@ -35,15 +38,20 @@
 </style>
 </head>
 <body>
+
 <h2>음악&영상</h2>
+
+<img src="https://github.com/Byeong-Rae/image-/blob/main/기타2.png?raw=true"><br><h2>기타2</h2><br><br>
+
 <!-- 커스텀 재생 영역 -->
 <div class="music-box">
   <audio id="audioPlayer"></audio>
   
-  <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
-  <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+  <div>
+    <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
+    <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+  </div>
 
-  <!-- 볼륨 조절 슬라이더 바 -->
   <div class="volume-control">
     🔊 볼륨: <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
   </div>
@@ -64,62 +72,81 @@
     "https://github.com/Byeong-Rae/music/blob/main/진추하 - One Summer Night.mp3",
     "https://github.com/Byeong-Rae/music/blob/main/Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
   ];
-let currentTrack = 0;
-  const player = document.getElementById("audioPlayer");
-  const playBtn = document.getElementById("playBtn");
-  const trackInfo = document.getElementById("trackInfo");
 
-  // 곡 불러오기 및 자동 재생 시도 함수
+  let currentTrack = 0;
+  let player, playBtn, trackInfo, volumeSlider;
+
+  // HTML 요소들이 완전히 로드된 안전한 시점에 변수 연결
+  window.addEventListener("DOMContentLoaded", () => {
+    player = document.getElementById("audioPlayer");
+    playBtn = document.getElementById("playBtn");
+    trackInfo = document.getElementById("trackInfo");
+    volumeSlider = document.getElementById("volumeSlider");
+
+    if (player) {
+      loadAndPlay(0);
+    } else {
+      console.error("audioPlayer 요소를 찾을 수 없습니다.");
+    }
+  });
+
   function loadAndPlay(index) {
+    if (!player) return;
     currentTrack = index;
     player.src = playlist[currentTrack].url;
     player.load();
+    
+    if (volumeSlider) {
+      player.volume = volumeSlider.value;
+    }
+
     player.play().then(() => {
-      playBtn.innerText = "⏸ 일시정지";
-      trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
+      if (playBtn) playBtn.innerText = "⏸ 일시정지";
+      if (trackInfo) trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
     }).catch(error => {
-      console.log("자동 재생 차단됨:", error);
-      playBtn.innerText = "▶ 재생";
-      trackInfo.innerText = "브라우저 정책으로 자동 재생이 차단되었습니다. [재생] 버튼을 눌러주세요.";
+      console.log("자동 재생 차단 또는 로드 실패:", error);
+      if (playBtn) playBtn.innerText = "▶ 재생";
+      if (trackInfo) trackInfo.innerText = "자동 재생이 차단되었습니다. [재생] 버튼을 눌러주세요.";
     });
   }
 
-  // 재생 / 일시정지 토글 버튼
   function togglePlay() {
+    if (!player) return;
     if (player.paused) {
       if (!player.src) {
         loadAndPlay(currentTrack);
       } else {
-        player.play();
-        playBtn.innerText = "⏸ 일시정지";
-        trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
+        player.play().then(() => {
+          if (playBtn) playBtn.innerText = "⏸ 일시정지";
+          if (trackInfo) trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
+        }).catch(err => console.log(err));
       }
     } else {
       player.pause();
-      playBtn.innerText = "▶ 재생";
-      trackInfo.innerText = "일시정지됨";
+      if (playBtn) playBtn.innerText = "▶ 재생";
+      if (trackInfo) trackInfo.innerText = "일시정지됨";
     }
   }
 
-  // 다음 곡 버튼
   function nextTrack() {
     currentTrack = (currentTrack + 1) % playlist.length;
     loadAndPlay(currentTrack);
   }
 
-  // 볼륨 조절 함수 (슬라이더를 움직일 때 실시간으로 반영)
   function changeVolume(value) {
-    player.volume = value;
+    if (player) {
+      player.volume = value;
+    }
   }
-  
-  // 한 곡이 끝나면 자동으로 다음 곡 재생 (반복)
-  player.onended = function() {
-    nextTrack();
-  };
 
-  // 페이지가 열리자마자 첫 곡 자동 재생 시도
-  window.addEventListener("DOMContentLoaded", () => {
-    loadAndPlay(0);
+  // 브라우저에 요소가 준비된 이후에 onended 등록을 위해 DOMContentLoaded 내부에서 처리되도록 유도
+  document.addEventListener("DOMContentLoaded", () => {
+    const audioEl = document.getElementById("audioPlayer");
+    if (audioEl) {
+      audioEl.onended = function() {
+        nextTrack();
+      };
+    }
   });
 </script>
 
