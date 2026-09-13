@@ -6,6 +6,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
+<audio id="audioPlayer" controls></audio>
+<script>
+  const playlist = [
+    "ABBA - The Winner Takes It All (1980).mp3",
+    "C_ine Dion - The Power Of Love (Official Remastered HD Video).mp3",
+    "One Summer Night.mp3",
+    "I Will Always Love You.mp3",
+    "Fire Inc. - Nowhere Fast (Official Video) Remastered Audio HD.mp3",
+    "롤러장 리게이라 여름은 지나가고.mp3",
+    "롤러장 New Baccara - Fantasy Boy (1988).mp3",
+    "Bonnie Tyler - Total Eclipse of the Heart (Turn Around) (Official Video).mp3",
+    "진추하 - One Summer Night.mp3",
+    "Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
+  ];
+  let currentTrack = 0;
+  const player = document.getElementById("audioPlayer");
+  
+  function playTrack(index) {
+    player.src = playlist[index];
+    player.load();
+    player.play();
+  }
+  
+  player.onended = function() {
+    currentTrack = (currentTrack + 1) % playlist.length;
+    playTrack(currentTrack);
+  };
+  
+  // 첫 곡 자동 재생 시작
+  playTrack(0);
+</script>
 <body>
 
 <h2>음악&영상</h2>
