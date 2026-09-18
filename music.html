@@ -30,6 +30,27 @@
     margin-top: 12px;
     font-size: 14px;
   }
+  .progress-control {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #555;
+  }
+  #progressBar {
+    flex: 1;
+    min-width: 200px;
+    cursor: pointer;
+    accent-color: #4CAF50;
+  }
+  #progressBar:disabled {
+    cursor: default;
+  }
+  .time {
+    font-variant-numeric: tabular-nums;
+    min-width: 38px;
+  }
   #trackInfo {
     margin-top: 10px;
     font-size: 14px;
@@ -47,6 +68,12 @@
   <div>
     <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
     <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+  </div>
+
+  <div class="progress-control">
+    <span class="time" id="currentTime">0:00</span>
+    <input type="range" id="progressBar" min="0" max="0" step="0.1" value="0" disabled>
+    <span class="time" id="duration">0:00</span>
   </div>
 
   <div class="volume-control">
@@ -82,12 +109,59 @@
 
   let currentTrack = 0;
   let player, playBtn, trackInfo, volumeSlider;
+  let progressBar, currentTimeEl, durationEl;
+  let isSeeking = false; // 사용자가 바를 드래그하는 중인지
+
+  // 초 → "m:ss" 형식
+  function formatTime(sec) {
+    if (!isFinite(sec) || sec < 0) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  function resetProgress() {
+    progressBar.max = 0;
+    progressBar.value = 0;
+    progressBar.disabled = true;
+    currentTimeEl.innerText = "0:00";
+    durationEl.innerText = "0:00";
+  }
 
   window.addEventListener("DOMContentLoaded", () => {
     player = document.getElementById("audioPlayer");
     playBtn = document.getElementById("playBtn");
     trackInfo = document.getElementById("trackInfo");
     volumeSlider = document.getElementById("volumeSlider");
+    progressBar = document.getElementById("progressBar");
+    currentTimeEl = document.getElementById("currentTime");
+    durationEl = document.getElementById("duration");
+
+    // 곡 길이를 알게 되면 바의 최대값 설정
+    player.addEventListener("loadedmetadata", () => {
+      progressBar.max = player.duration;
+      progressBar.disabled = false;
+      durationEl.innerText = formatTime(player.duration);
+    });
+
+    // 재생 중 현재 위치 반영 (드래그 중에는 건드리지 않음)
+    player.addEventListener("timeupdate", () => {
+      if (isSeeking) return;
+      progressBar.value = player.currentTime;
+      currentTimeEl.innerText = formatTime(player.currentTime);
+    });
+
+    // 드래그하는 동안은 시간 표시만 미리 보여주기
+    progressBar.addEventListener("input", () => {
+      isSeeking = true;
+      currentTimeEl.innerText = formatTime(progressBar.value);
+    });
+
+    // 손을 떼면 그 위치로 이동
+    progressBar.addEventListener("change", () => {
+      player.currentTime = progressBar.value;
+      isSeeking = false;
+    });
 
     // 곡이 끝나면 다음 곡
     player.addEventListener("ended", nextTrack);
@@ -108,6 +182,7 @@
 
   function loadAndPlay(index) {
     currentTrack = index;
+    resetProgress();
     player.src = playlist[currentTrack].url;
     player.volume = volumeSlider.value;
 
