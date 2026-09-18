@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="KR">
+<html lang="ko">
 <head>
 <title>음악&영상</title>
 <meta charset="utf-8">
@@ -41,12 +41,9 @@
 
 <h2>음악&영상</h2>
 
-<img src="https://github.com/Byeong-Rae/image-/blob/main/기타2.png?raw=true"><br><h2>기타2</h2><br><br>
-
-<!-- 커스텀 재생 영역 -->
 <div class="music-box">
-  <audio id="audioPlayer"></audio>
-  
+  <audio id="audioPlayer" preload="none"></audio>
+
   <div>
     <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
     <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
@@ -55,99 +52,95 @@
   <div class="volume-control">
     🔊 볼륨: <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
   </div>
-  
+
   <div id="trackInfo">음악 준비 중...</div>
 </div>
 
 <script>
-  const playlist = [
-    "https://github.com/Byeong-Rae/music/blob/main/ABBA-TheWinneTakesItAll.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/C_ine Dion - The Power Of Love (Official Remastered HD Video).mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/One Summer Night.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/I Will Always Love You.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/Fire Inc. - Nowhere Fast (Official Video) Remastered Audio HD.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/롤러장 리게이라 여름은 지나가고.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/롤러장 New Baccara - Fantasy Boy (1988).mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/Bonnie Tyler - Total Eclipse of the Heart (Turn Around) (Official Video).mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/진추하 - One Summer Night.mp3",
-    "https://github.com/Byeong-Rae/music/blob/main/Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
+  // blob 주소는 GitHub "웹페이지"라서 재생이 안 됩니다. raw 주소를 써야 합니다.
+  const BASE_URL = "https://raw.githubusercontent.com/Byeong-Rae/music/main/";
+
+  // 저장소에 있는 파일 이름을 그대로 적으세요 (대소문자, 공백, 특수문자까지 동일하게)
+  const files = [
+    "ABBA-TheWinneTakesItAll.mp3",
+    "C_ine Dion - The Power Of Love (Official Remastered HD Video).mp3",
+    "One Summer Night.mp3",
+    "I Will Always Love You.mp3",
+    "Fire Inc. - Nowhere Fast (Official Video) Remastered Audio HD.mp3",
+    "롤러장 리게이라 여름은 지나가고.mp3",
+    "롤러장 New Baccara - Fantasy Boy (1988).mp3",
+    "Bonnie Tyler - Total Eclipse of the Heart (Turn Around) (Official Video).mp3",
+    "진추하 - One Summer Night.mp3",
+    "Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
   ];
+
+  // 파일 이름 → { title, url } 객체로 변환 (공백·한글은 URL 인코딩)
+  const playlist = files.map(name => ({
+    title: name.replace(/\.mp3$/i, ""),
+    url: BASE_URL + encodeURIComponent(name)
+  }));
 
   let currentTrack = 0;
   let player, playBtn, trackInfo, volumeSlider;
 
-  // HTML 요소들이 완전히 로드된 안전한 시점에 변수 연결
   window.addEventListener("DOMContentLoaded", () => {
     player = document.getElementById("audioPlayer");
     playBtn = document.getElementById("playBtn");
     trackInfo = document.getElementById("trackInfo");
     volumeSlider = document.getElementById("volumeSlider");
 
-    if (player) {
-      loadAndPlay(0);
-    } else {
-      console.error("audioPlayer 요소를 찾을 수 없습니다.");
-    }
+    // 곡이 끝나면 다음 곡
+    player.addEventListener("ended", nextTrack);
+
+    // 파일을 못 불러왔을 때 원인을 화면에 표시
+    player.addEventListener("error", () => {
+      trackInfo.innerText = `불러오기 실패: ${playlist[currentTrack].title} (파일 이름이나 주소를 확인하세요)`;
+      playBtn.innerText = "▶ 재생";
+    });
+
+    loadAndPlay(0);
   });
 
+  function showPlaying() {
+    playBtn.innerText = "⏸ 일시정지";
+    trackInfo.innerText = `재생 중 (${currentTrack + 1}/${playlist.length}): ${playlist[currentTrack].title}`;
+  }
+
   function loadAndPlay(index) {
-    if (!player) return;
     currentTrack = index;
     player.src = playlist[currentTrack].url;
-    player.load();
-    
-    if (volumeSlider) {
-      player.volume = volumeSlider.value;
-    }
+    player.volume = volumeSlider.value;
 
-    player.play().then(() => {
-      if (playBtn) playBtn.innerText = "⏸ 일시정지";
-      if (trackInfo) trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
-    }).catch(error => {
+    player.play().then(showPlaying).catch(error => {
       console.log("자동 재생 차단 또는 로드 실패:", error);
-      if (playBtn) playBtn.innerText = "▶ 재생";
-      if (trackInfo) trackInfo.innerText = "자동 재생이 차단되었습니다. [재생] 버튼을 눌러주세요.";
+      playBtn.innerText = "▶ 재생";
+      if (error.name === "NotAllowedError") {
+        trackInfo.innerText = "자동 재생이 차단되었습니다. [재생] 버튼을 눌러주세요.";
+      }
     });
   }
 
   function togglePlay() {
-    if (!player) return;
     if (player.paused) {
       if (!player.src) {
         loadAndPlay(currentTrack);
       } else {
-        player.play().then(() => {
-          if (playBtn) playBtn.innerText = "⏸ 일시정지";
-          if (trackInfo) trackInfo.innerText = `재생 중 (${currentTrack + 1}/10): ${playlist[currentTrack].title}`;
-        }).catch(err => console.log(err));
+        player.play().then(showPlaying).catch(err => console.log(err));
       }
     } else {
       player.pause();
-      if (playBtn) playBtn.innerText = "▶ 재생";
-      if (trackInfo) trackInfo.innerText = "일시정지됨";
+      playBtn.innerText = "▶ 재생";
+      trackInfo.innerText = "일시정지됨";
     }
   }
 
   function nextTrack() {
-    currentTrack = (currentTrack + 1) % playlist.length;
-    loadAndPlay(currentTrack);
+    loadAndPlay((currentTrack + 1) % playlist.length);
   }
 
   function changeVolume(value) {
-    if (player) {
-      player.volume = value;
-    }
+    player.volume = value;
   }
-
-  // 브라우저에 요소가 준비된 이후에 onended 등록을 위해 DOMContentLoaded 내부에서 처리되도록 유도
-  document.addEventListener("DOMContentLoaded", () => {
-    const audioEl = document.getElementById("audioPlayer");
-    if (audioEl) {
-      audioEl.onended = function() {
-        nextTrack();
-      };
-    }
-  });
 </script>
 
 </body>
