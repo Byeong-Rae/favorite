@@ -51,6 +51,44 @@
     font-variant-numeric: tabular-nums;
     min-width: 38px;
   }
+  #trackList {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    border-top: 1px solid #ddd;
+  }
+  #trackList li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 8px 6px;
+    font-size: 14px;
+    border-bottom: 1px solid #e6e6e6;
+    cursor: pointer;
+  }
+  #trackList li:hover {
+    background: #e9f5ea;
+  }
+  #trackList li:focus-visible {
+    outline: 2px solid #4CAF50;
+    outline-offset: -2px;
+  }
+  #trackList li .num {
+    color: #888;
+    min-width: 20px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  #trackList li.active {
+    background: #dff0e0;
+    font-weight: bold;
+    color: #2e7d32;
+  }
+  #trackList li.failed {
+    color: #b00020;
+  }
   #trackInfo {
     margin-top: 10px;
     font-size: 14px;
@@ -81,6 +119,8 @@
   </div>
 
   <div id="trackInfo">음악 준비 중...</div>
+
+  <ul id="trackList" aria-label="재생 목록"></ul>
 </div>
 
 <script>
@@ -98,7 +138,10 @@
     "롤러장 New Baccara - Fantasy Boy (1988).mp3",
     "Bonnie Tyler - Total Eclipse of the Heart (Turn Around) (Official Video).mp3",
     "진추하 - One Summer Night.mp3",
-    "Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3"
+    "Air Supply - Making Love Out Of Nothing At All (Official HD Video).mp3",
+    "Europe-TheFinalCountdown.mp3",
+    "OPUS-LiveisLife.mp3",
+    "StevieWonder-PartTimeLover.mp3"
   ];
 
   // 파일 이름 → { title, url } 객체로 변환 (공백·한글은 URL 인코딩)
@@ -111,6 +154,45 @@
   let player, playBtn, trackInfo, volumeSlider;
   let progressBar, currentTimeEl, durationEl;
   let isSeeking = false; // 사용자가 바를 드래그하는 중인지
+  let trackListEl;
+
+  // 재생 목록 그리기
+  function renderTrackList() {
+    trackListEl.innerHTML = "";
+    playlist.forEach((track, i) => {
+      const li = document.createElement("li");
+      li.tabIndex = 0; // 키보드로도 선택 가능
+      li.innerHTML = `<span class="num">${i + 1}</span><span class="title"></span>`;
+      li.querySelector(".title").textContent = track.title;
+      li.addEventListener("click", () => selectTrack(i));
+      li.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectTrack(i);
+        }
+      });
+      trackListEl.appendChild(li);
+    });
+  }
+
+  // 목록에서 곡을 눌렀을 때: 지금 곡이면 재생/일시정지, 다른 곡이면 그 곡 재생
+  function selectTrack(index) {
+    if (index === currentTrack && player.src) {
+      togglePlay();
+    } else {
+      loadAndPlay(index);
+    }
+  }
+
+  // 현재 곡 강조 표시
+  function highlightCurrent() {
+    [...trackListEl.children].forEach((li, i) => {
+      li.classList.toggle("active", i === currentTrack);
+      li.setAttribute("aria-current", i === currentTrack ? "true" : "false");
+    });
+    const active = trackListEl.children[currentTrack];
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
 
   // 초 → "m:ss" 형식
   function formatTime(sec) {
@@ -136,6 +218,8 @@
     progressBar = document.getElementById("progressBar");
     currentTimeEl = document.getElementById("currentTime");
     durationEl = document.getElementById("duration");
+    trackListEl = document.getElementById("trackList");
+    renderTrackList();
 
     // 곡 길이를 알게 되면 바의 최대값 설정
     player.addEventListener("loadedmetadata", () => {
@@ -170,6 +254,8 @@
     player.addEventListener("error", () => {
       trackInfo.innerText = `불러오기 실패: ${playlist[currentTrack].title} (파일 이름이나 주소를 확인하세요)`;
       playBtn.innerText = "▶ 재생";
+      const li = trackListEl.children[currentTrack];
+      if (li) li.classList.add("failed");
     });
 
     loadAndPlay(0);
@@ -183,6 +269,7 @@
   function loadAndPlay(index) {
     currentTrack = index;
     resetProgress();
+    highlightCurrent();
     player.src = playlist[currentTrack].url;
     player.volume = volumeSlider.value;
 
