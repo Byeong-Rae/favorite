@@ -22,9 +22,9 @@ header {
 nav {
   float: left;
   width: 10%;
-  height: 300px; /* only for demonstration, should be removed */
+  height: 250px; /* only for demonstration, should be removed */
   background: #ccc;
-  padding: 10px;
+  padding: 5px;
 }
 
 /* Style the list inside the menu */
