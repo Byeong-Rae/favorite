@@ -22,17 +22,17 @@ header {
 nav {
   float: left;
   width: 10%;
-  height: 600px; /* only for demonstration, should be removed */
+  height: 300px; /* only for demonstration, should be removed */
   background: #ccc;
-  padding: 20px;
+  padding: 10px;
 }
 
 /* Style the list inside the menu */
 nav ul {
   list-style-type: disc;
   padding: 0;
-  line-height:25px;
-  font-size: 16px;
+  line-height:10px;
+  font-size: 14px;
 }
 
 article {
