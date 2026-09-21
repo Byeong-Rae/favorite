@@ -24,7 +24,7 @@ nav {
   width: 10%;
   height: 200px; /* only for demonstration, should be removed */
   background: #ccc;
-  padding: 5px;
+  padding: 2px;
 }
 
 /* Style the list inside the menu */
@@ -40,7 +40,7 @@ article {
   padding: 20px;
   width: 80%;
   background-color: #f1f1f1;
-  height: 1000px; /* only for demonstration, should be removed */
+  height: 100%; /* only for demonstration, should be removed */
 }
 
 /* Clear floats after the columns */
