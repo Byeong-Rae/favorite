@@ -106,6 +106,7 @@
   <div>
     <button class="music-btn" id="playBtn" onclick="togglePlay()">▶ 재생</button>
     <button class="music-btn" onclick="nextTrack()">⏭ 다음 곡</button>
+    <button class="music-btn" onclick="randomTrack()">🔀 무작위 재생</button>
   </div>
 
   <div class="progress-control">
@@ -303,6 +304,20 @@
   function changeVolume(value) {
     player.volume = value;
   }
+
+  function randomTrack() {
+    if (playlist.length <= 1) {
+      loadAndPlay(0);
+      return;
+    }
+    let randomIndex;
+    // 현재 재생 중인 곡과 다른 곡을 선택
+    do {
+      randomIndex = Math.floor(Math.random() * playlist.length);
+    } while (randomIndex === currentTrack);
+    loadAndPlay(randomIndex);
+  }
+
 </script>
 
 </body>
